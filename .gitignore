@@ -1,0 +1,28 @@
+# Credentials and environment files
+.env
+.env.*
+!.env.example
+profiles.yml
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# dbt generated files
+target/
+dbt_packages/
+logs/
+
+# Local data and database files
+*.csv
+*.xlsx
+*.bak
+*.mdf
+*.ldf
+
+# IDE and operating system files
+.vscode/
+.DS_Store
+Thumbs.db
