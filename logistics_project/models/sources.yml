@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: raw_logistics
+    database: Logistics_Analytics
+    schema: dbo
+    description: "Raw logistics data loaded into SQL Server."
+    tables:
+      - name: customers
+      - name: customs
+      - name: date_dimension
+      - name: delivery_exceptions
+      - name: driver_performance
+      - name: drivers
+      - name: fuel_transactions
+      - name: routes
+      - name: shipment_costs
+      - name: shipments
+      - name: tracking_events
+      - name: trips
+      - name: vehicles
+      - name: warehouses

@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: stg_shipments
+    description: "Cleaned shipment records for logistics analytics."
+    columns:
+      - name: shipment_id
+        description: "Unique identifier for each shipment."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: "Customer associated with the shipment."

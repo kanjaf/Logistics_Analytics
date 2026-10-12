@@ -26,3 +26,9 @@ logs/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# dbt local configuration and generated artifacts
+**/profiles.yml
+**/target/
+**/dbt_packages/
+**/logs/
