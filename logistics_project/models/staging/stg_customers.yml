@@ -1,0 +1,30 @@
+
+version: 2
+
+models:
+  - name: stg_customers
+    description: "Cleaned customer staging model with country derived from a geography reference dataset."
+
+    columns:
+      - name: customer_id
+        description: "Unique identifier for each customer."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        data_tests:
+          - not_null
+
+      - name: customer_segment
+        data_tests:
+          - not_null
+
+      - name: account_created_date
+        data_tests:
+          - not_null
+
+      - name: derived_country
+        description: "Country assigned using the customer's city and the geography reference dataset."
+        data_tests:
+          - not_null

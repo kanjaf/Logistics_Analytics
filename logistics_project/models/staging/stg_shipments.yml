@@ -1,8 +1,12 @@
+
 version: 2
 
 models:
   - name: stg_shipments
-    description: "Cleaned shipment records for logistics analytics."
+    description: >
+      Cleaned and standardized shipment records. Preserves source delivery
+      fields and exposes identified data-quality issues through explicit flags.
+
     columns:
       - name: shipment_id
         description: "Unique identifier for each shipment."
@@ -11,4 +15,40 @@ models:
           - unique
 
       - name: customer_id
-        description: "Customer associated with the shipment."
+        description: >
+          Identifier of the customer associated with the shipment.
+          Missing values are preserved when absent from the source.
+
+      - name: delivery_status
+        description: >
+          Original delivery status after trimming whitespace and converting
+          blank strings to NULL. Status values are not standardized to one
+          canonical spelling in this staging model.
+
+      - name: is_delayed
+        description: >
+          Source-system indicator of whether the shipment was marked delayed.
+          Preserved from the source and not recalculated in staging.
+
+      - name: delay_flag_mismatch
+        description: >
+          Data-quality flag set to 1 when the source is_delayed indicator
+          disagrees with the comparison of actual_delivery_date and
+          expected_delivery_date. NULL when either date is missing.
+          A value of 1 identifies disagreement but does not establish
+          which field is correct.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: in_transit_with_actual_date_flag
+        description: >
+          Data-quality flag set to 1 when delivery_status normalizes to
+          IN TRANSIT and actual_delivery_date is populated. This identifies
+          a potential status/date inconsistency; it does not prove delivery.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
