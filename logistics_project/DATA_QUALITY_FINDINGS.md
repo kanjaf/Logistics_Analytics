@@ -154,3 +154,26 @@ The `stg_drivers` model built successfully. Three configured tests passed:
 - `driver_name` is not null.
 
 The missing safety scores are intentionally retained and are not currently tested as non-null.
+## Route Data Quality Findings
+
+### Negative route distances
+
+**Finding:** Four of the 90 routes have a recorded distance of -100 km.
+
+**Affected route IDs:**
+- ROUTE0005
+- ROUTE0015
+- ROUTE0067
+- ROUTE0078
+
+**Impact:** Negative distances are invalid for route-distance analysis and may distort distance-based reporting, transportation cost analysis, and route efficiency metrics.
+
+**Handling decision:**
+- Preserve the original `distance_km` values in the staging model.
+- Create `invalid_distance_flag`, set to 1 when `distance_km <= 0`, otherwise 0.
+- Do not replace negative distances with zero or estimated values without a verified source.
+- Exclude or investigate flagged records before using route distances in analytical metrics.
+
+**Validation:** The staging model contains 90 routes, including four records flagged for non-positive distances. The flag matches the source values.
+
+**Recommended follow-up:** Verify the four distances against an authoritative route-distance source before using these records for distance-based analysis.
