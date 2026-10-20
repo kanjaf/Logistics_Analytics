@@ -102,3 +102,55 @@ The staging process follows these principles:
 The shipment dataset contains measurable inconsistencies between delivery status, expected and actual delivery timestamps, and the source delay indicator.
 
 These issues are being documented and exposed through staging-level quality flags. No unsupported corrections have been applied to the source fields.
+
+## 9. Driver Data Quality Findings
+
+**Source table:** `dbo.drivers`  
+**Staging model:** `stg_drivers`
+
+### Source profile
+
+The drivers table contains 240 records. No duplicate driver IDs or missing driver IDs were identified. All driver names were populated.
+
+| Check | Result |
+|---|---:|
+| Source driver records | 240 |
+| Staged driver records | 240 |
+| Distinct driver IDs | 240 |
+| Missing driver IDs | 0 |
+| Missing driver names | 0 |
+| Missing safety scores | 5 |
+| Observed minimum safety score | 47.80 |
+| Observed maximum safety score | 100.00 |
+
+### Missing safety scores
+
+Five drivers have a `NULL` value in `safety_score`. Their other displayed attributes were populated.
+
+**Treatment:** Missing scores are preserved as `NULL`. No score is imputed because the source data does not establish why the values are missing or what the correct scores should be.
+
+### Numeric precision
+
+The source `safety_score` column uses a floating-point data type, producing values such as `47.7999992370605`. The staging model rounds scores to two decimal places and casts them to `DECIMAL(5,2)` for consistent reporting.
+
+The observed score range is descriptive only. A formal business rule defining valid safety-score boundaries has not yet been confirmed.
+
+### Other observations
+
+- The source contains 125 records with gender recorded as `Male` and 115 as `Female`.
+- Three licence classes were observed: `B`, `C`, and `CE`.
+- Hire dates ranged from January 2015 to December 2024.
+- Experience ranged from 1 to 11 years.
+- No future hire dates or experience values above 60 years were identified in the screening checks.
+
+These findings do not establish the correctness of every source value; they record the checks performed and their results.
+
+### dbt validation
+
+The `stg_drivers` model built successfully. Three configured tests passed:
+
+- `driver_id` is not null.
+- `driver_id` is unique.
+- `driver_name` is not null.
+
+The missing safety scores are intentionally retained and are not currently tested as non-null.

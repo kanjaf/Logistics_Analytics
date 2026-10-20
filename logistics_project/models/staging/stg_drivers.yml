@@ -1,0 +1,42 @@
+
+version: 2
+
+models:
+  - name: stg_drivers
+    description: >
+      Cleaned and standardized driver records for logistics analytics.
+      Missing safety scores are preserved as NULL.
+
+    columns:
+      - name: driver_id
+        description: "Unique identifier for each driver."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: driver_name
+        description: "Driver's name after trimming whitespace."
+        data_tests:
+          - not_null
+
+      - name: gender
+        description: "Source gender value after trimming whitespace."
+
+      - name: hire_date
+        description: "Driver hire date and time recorded in the source."
+
+      - name: experience_years
+        description: "Driver experience in years, cast to an integer."
+
+      - name: license_class
+        description: "Driver licence class after trimming whitespace."
+
+      - name: home_city
+        description: "Driver's recorded home city after trimming whitespace."
+
+      - name: safety_score
+        description: >
+          Safety score rounded to two decimal places and cast to DECIMAL.
+          Five source records have missing scores, which remain NULL.
+          The observed source range is 47.80 to 100.00; this is descriptive,
+          not a confirmed business-rule constraint.
