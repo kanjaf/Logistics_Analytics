@@ -1,0 +1,64 @@
+
+version: 2
+
+models:
+  - name: stg_routes
+    description: >
+      Cleaned and standardized route records for logistics analytics.
+      Non-positive distances are preserved and flagged for investigation.
+      Source border-crossing values of 'None' are preserved.
+
+    columns:
+      - name: route_id
+        description: "Unique identifier for each route."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: origin_city
+        description: "Origin city with standardized casing."
+        data_tests:
+          - not_null
+
+      - name: destination_city
+        description: "Destination city with standardized casing."
+        data_tests:
+          - not_null
+
+      - name: distance_km
+        description: >
+          Recorded route distance in kilometres. Non-positive values
+          are retained for investigation rather than replaced.
+        data_tests:
+          - not_null
+
+      - name: route_type
+        description: "Route classification with Cross-Border labels standardized."
+        data_tests:
+          - not_null
+
+      - name: border_crossing
+        description: >
+          Recorded border crossing. The literal value 'None' is preserved
+          because its business meaning has not been independently verified.
+        data_tests:
+          - not_null
+
+      - name: standard_transit_hours
+        description: "Standard transit time in hours, rounded to two decimals."
+        data_tests:
+          - not_null
+
+      - name: road_quality
+        description: "Road quality category with standardized casing."
+        data_tests:
+          - not_null
+
+      - name: invalid_distance_flag
+        description: >
+          Equals 1 when distance_km is zero or negative, otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
