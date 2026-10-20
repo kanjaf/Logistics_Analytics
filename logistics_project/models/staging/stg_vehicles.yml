@@ -1,0 +1,65 @@
+
+version: 2
+
+models:
+  - name: stg_vehicles
+    description: >
+      Cleaned and standardized vehicle records for logistics analytics.
+      Missing statuses are preserved as NULL, and negative odometer
+      readings are flagged for investigation.
+
+    columns:
+      - name: vehicle_id
+        description: "Unique identifier for each vehicle."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: registration_number
+        description: "Vehicle registration number after trimming whitespace."
+        data_tests:
+          - not_null
+
+      - name: vehicle_type
+        description: "Vehicle type with standardized casing."
+        data_tests:
+          - not_null
+
+      - name: capacity_kg
+        description: "Vehicle capacity in kilograms."
+        data_tests:
+          - not_null
+
+      - name: fuel_type
+        description: "Fuel type with Diesel casing standardized."
+        data_tests:
+          - not_null
+
+      - name: vehicle_age_years
+        description: "Vehicle age in years, cast to an integer."
+        data_tests:
+          - not_null
+
+      - name: purchase_date
+        description: "Recorded vehicle purchase date and time."
+        data_tests:
+          - not_null
+
+      - name: status
+        description: >
+          Operational status after standardizing casing.
+          Five vehicles have missing source statuses, preserved as NULL.
+
+      - name: odometer_km
+        description: >
+          Recorded odometer reading in kilometres. Negative readings
+          are preserved for investigation rather than replaced.
+
+      - name: negative_odometer_flag
+        description: >
+          Equals 1 when odometer_km is negative, otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
