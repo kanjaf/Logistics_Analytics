@@ -1,0 +1,100 @@
+
+version: 2
+
+models:
+  - name: stg_trips
+    description: >
+      Cleaned trip records for logistics analytics. Exact duplicate rows
+      are removed using ROW_NUMBER(). Actual timestamps are converted to
+      datetime2, trip statuses are standardized, and missing vehicle or
+      driver assignments are flagged without inventing replacement values.
+
+    columns:
+      - name: trip_id
+        description: "Unique identifier for each trip after exact duplicate removal."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: route_id
+        description: "Identifier of the route assigned to the trip."
+        data_tests:
+          - not_null
+
+      - name: vehicle_id
+        description: "Vehicle assigned to the trip; missing assignments are preserved as NULL."
+
+      - name: driver_id
+        description: "Driver assigned to the trip; missing assignments are preserved as NULL."
+
+      - name: planned_departure
+        description: "Scheduled trip departure timestamp."
+        data_tests:
+          - not_null
+
+      - name: actual_departure
+        description: "Actual departure timestamp converted to datetime2."
+        data_tests:
+          - not_null
+
+      - name: planned_arrival
+        description: "Scheduled trip arrival timestamp."
+        data_tests:
+          - not_null
+
+      - name: actual_arrival
+        description: "Actual arrival timestamp converted to datetime2."
+        data_tests:
+          - not_null
+
+      - name: planned_distance_km
+        description: "Planned trip distance in kilometres."
+        data_tests:
+          - not_null
+
+      - name: actual_distance_km
+        description: "Recorded actual trip distance in kilometres."
+        data_tests:
+          - not_null
+
+      - name: trip_status
+        description: "Standardized trip status."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Completed
+                  - Cancelled
+
+      - name: missing_vehicle_id_flag
+        description: "1 when vehicle_id is missing; otherwise 0."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: missing_driver_id_flag
+        description: "1 when driver_id is missing; otherwise 0."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: missing_actual_departure_flag
+        description: "1 when actual_departure is missing; otherwise 0."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: missing_actual_arrival_flag
+        description: "1 when actual_arrival is missing; otherwise 0."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
