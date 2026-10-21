@@ -1,0 +1,33 @@
+
+version: 2
+
+models:
+  - name: stg_customs
+    description: >
+      Cleans and standardizes customs clearance records, preserves
+      the original duty rate, and calculates an implied duty
+      percentage rounded to two decimal places.
+
+    columns:
+      - name: customs_id
+        description: Unique identifier for each customs record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: shipment_id
+        description: Shipment associated with the customs record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: customs_status
+        description: Customs clearance status standardized to lowercase.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - cleared
+                  - inspection
+                  - documentation hold
