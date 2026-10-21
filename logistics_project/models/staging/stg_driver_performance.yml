@@ -1,0 +1,69 @@
+
+version: 2
+
+models:
+  - name: stg_driver_performance
+    description: >
+      Cleans driver performance metrics for 2026, standardizes
+      numeric precision, and flags suspicious metric values
+      without silently correcting the source data.
+
+    columns:
+      - name: driver_id
+        description: Driver associated with the performance record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: source('raw_logistics', 'drivers')
+                field: driver_id
+
+      - name: period
+        description: Performance reporting year.
+        data_tests:
+          - not_null
+
+      - name: trips_completed
+        description: Number of trips completed during the reporting period.
+        data_tests:
+          - not_null
+
+      - name: average_distance_km
+        description: Average distance travelled in kilometres.
+        data_tests:
+          - not_null
+
+      - name: safety_score
+        description: Driver safety score from the source.
+        data_tests:
+          - not_null
+
+      - name: on_time_rate
+        description: >
+          Source on-time rate. Values outside the assumed 0-1 range
+          are preserved and flagged for investigation.
+
+      - name: fuel_efficiency_score
+        description: >
+          Source fuel-efficiency score. Values outside the assumed
+          0-100 range are preserved and flagged for investigation.
+
+      - name: invalid_on_time_rate_flag
+        description: >
+          1 when on_time_rate falls outside the assumed 0-1 range;
+          otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: invalid_fuel_efficiency_score_flag
+        description: >
+          1 when fuel_efficiency_score falls outside the assumed
+          0-100 range; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
