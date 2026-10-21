@@ -1,0 +1,52 @@
+
+version: 2
+
+models:
+  - name: stg_warehouses
+    description: >
+      Cleaned and standardized warehouse records for logistics analytics.
+      Warehouse names and city names are uppercase. Exact duplicate rows
+      are removed, and blank text values are converted to NULL.
+
+    columns:
+      - name: warehouse_id
+        description: "Unique identifier for each warehouse."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: warehouse_name
+        description: "Warehouse name standardized to uppercase."
+        data_tests:
+          - not_null
+
+      - name: city
+        description: "Warehouse city standardized to uppercase."
+        data_tests:
+          - not_null
+
+      - name: country
+        description: "Country where the warehouse is located."
+        data_tests:
+          - not_null
+
+      - name: warehouse_type
+        description: "Classification of the warehouse facility."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Fulfillment Center
+                  - Regional Hub
+                  - Cross-Dock
+
+      - name: capacity_units
+        description: "Recorded warehouse capacity in units."
+        data_tests:
+          - not_null
+
+      - name: operating_cost_per_day
+        description: "Recorded daily operating cost."
+        data_tests:
+          - not_null
