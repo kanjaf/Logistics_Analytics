@@ -177,3 +177,31 @@ The missing safety scores are intentionally retained and are not currently teste
 **Validation:** The staging model contains 90 routes, including four records flagged for non-positive distances. The flag matches the source values.
 
 **Recommended follow-up:** Verify the four distances against an authoritative route-distance source before using these records for distance-based analysis.
+
+## Customs Data Quality Findings
+
+### 1. Duty Rate Stored as an Incorrect Data Type
+
+**Issue:** The source `dbo.customs` table stores `duty_rate` as SQL Server `TIME`, even though the field represents a percentage. This makes the source column unsuitable for direct percentage calculations and reporting.
+
+**Investigation findings:**
+- Total customs records: 12,000.
+- The source duty-rate values include `00:01:00`, `00:02:00`, `00:05:00`, `00:15:00`, `00:25:00`, and `01:05:00`.
+- The implied rate was calculated as `duty_amount / declared_value * 100`.
+- The first five time values correspond consistently to implied rates of 10%, 20%, 5%, 15%, and 25%, respectively, across records where both financial amounts are available.
+- Eight records contain the anomalous source value `01:05:00`. Their implied rates vary: three records at 5%, one at 10%, one at 20%, and three at 25%. Therefore, the intended percentage cannot be reliably inferred from this source value alone.
+
+**Transformation decision:** The staging model preserves the original source value in `source_duty_rate` and introduces `calculated_duty_rate_pct`, derived from `duty_amount / declared_value * 100` and rounded to two decimal places. Missing financial values are preserved, and the calculated rate remains NULL when it cannot be determined.
+
+**Validation results:**
+- Total records: 12,000.
+- Records with both declared value and duty amount available: 11,755.
+- Records with uncalculable rates due to missing financial values: 245.
+- Missing declared values: 240.
+- Missing duty amounts: 5.
+- Zero declared values: 0.
+
+**Limitation:** The calculated percentage represents the rate implied by the available financial amounts. It does not independently establish that the declared value or duty amount is correct. The original source-rate field is retained for traceability, and the eight anomalous records are not silently corrected.
+
+**Recommended upstream fix:** Change the source system's duty-rate field to a suitable numeric type, such as `DECIMAL`, and validate the rate against the duty amount and declared value at ingestion.
+
