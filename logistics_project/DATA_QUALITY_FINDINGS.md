@@ -204,4 +204,69 @@ The missing safety scores are intentionally retained and are not currently teste
 **Limitation:** The calculated percentage represents the rate implied by the available financial amounts. It does not independently establish that the declared value or duty amount is correct. The original source-rate field is retained for traceability, and the eight anomalous records are not silently corrected.
 
 **Recommended upstream fix:** Change the source system's duty-rate field to a suitable numeric type, such as `DECIMAL`, and validate the rate against the duty amount and declared value at ingestion.
+## Fuel Transactions (`dbo.fuel_transactions`)
+
+### 1. Dataset Overview
+
+The raw fuel transactions table contains **8,000 records** covering transactions from 1 January 2025 to 28 September 2026.
+
+Profiling found no missing transaction IDs, trip IDs, vehicle IDs, transaction dates, litres, prices per litre, or recorded fuel costs. There were no duplicate transaction IDs or exact duplicate records. However, 240 records have missing fuel station names.
+
+### 2. Non-Positive Fuel Quantities
+
+Profiling identified **18 transactions with non-positive fuel quantities**:
+
+| Issue | Records | Finding |
+|---|---:|---|
+| Negative litres | 8 | All eight records have a quantity of -100 litres |
+| Zero litres | 10 | All ten records have zero litres |
+| Total | 18 | All 18 have positive recorded fuel costs |
+
+These records require investigation because zero or negative quantities do not reconcile naturally with positive recorded fuel costs. Negative quantities could represent reversals or corrections, but the source data does not establish their meaning.
+
+**Decision:** Preserve the original quantities and recorded costs. The `stg_fuel_transactions` model adds `nonpositive_litres_flag`, set to 1 when the original quantity is zero or negative, and 0 otherwise. The model does not silently correct or remove these records.
+
+### 3. Recorded Fuel Cost Does Not Reconcile with Calculated Cost
+
+Fuel costs were checked against the following calculation:
+
+`ABS(litres) × price_per_litre`
+
+A tolerance of 1.00 was used to account for minor rounding differences. Absolute litres were used for this diagnostic comparison so that negative quantities could also be assessed; this does not imply that negative quantities are valid fuel purchases.
+
+| Reconciliation result | Transactions | Percentage |
+|---|---:|---:|
+| Match within 1.00 | 5,584 | 69.80% |
+| Difference greater than 1.00 | 2,416 | 30.20% |
+| Total assessed | 8,000 | 100.00% |
+
+Further analysis separated the results by quantity:
+
+| Quantity category | Transactions | Matching costs | Mismatching costs |
+|---|---:|---:|---:|
+| Positive litres | 7,982 | 5,584 | 2,398 |
+| Zero litres | 10 | 0 | 10 |
+| Negative litres | 8 | 0 | 8 |
+| Total | 8,000 | 5,584 | 2,416 |
+
+The discrepancy is not limited to zero and negative quantities. Among the 7,982 transactions with positive quantities, **2,398 (approximately 30.07%)** still differ from the calculated cost by more than 1.00.
+
+**Decision:** Preserve `fuel_cost` as recorded in the source. The `stg_fuel_transactions` model adds `fuel_cost_mismatch_flag`, set to 1 when the absolute difference between recorded cost and calculated cost exceeds 1.00, and 0 otherwise. The flag uses the original numeric values before reporting precision is applied. No recorded costs are overwritten.
+
+The tolerance is a diagnostic choice for this project, not a confirmed business rule. The reasons for the discrepancies remain unverified and should be investigated with the data owner before any source values are corrected.
+
+### 4. Fuel Station Standardization
+
+A total of 240 records have missing fuel station names. These values are retained as `NULL`.
+
+For non-missing station names, the staging model trims surrounding whitespace, converts text to uppercase, and replaces commas and hyphens with spaces. This improves consistency when grouping fuel transactions by station. It does not establish whether differently written names refer to the same real-world station.
+
+### 5. Staging Decisions and Outstanding Questions
+
+- Preserve all 8,000 source transactions.
+- Retain negative and zero quantities and expose them through `nonpositive_litres_flag`.
+- Retain recorded fuel costs and expose discrepancies through `fuel_cost_mismatch_flag`.
+- Preserve missing station names as `NULL`.
+- Investigate the business meaning of negative quantities, zero-quantity transactions with positive costs, and the 2,416 cost discrepancies.
+- Confirm the expected treatment of rounding, reversals, adjustments, and other fuel-cost components with the data owner before changing any source values.
 
