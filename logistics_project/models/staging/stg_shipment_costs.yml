@@ -1,0 +1,90 @@
+
+version: 2
+
+models:
+  - name: stg_shipment_costs
+    description: >
+      Cleaned shipment cost records with financial reconciliation
+      and missing-cost flags.
+
+    columns:
+      - name: cost_id
+        description: Unique identifier for each shipment cost record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: shipment_id
+        description: Shipment associated with the cost record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: transport_cost
+        description: Recorded transport cost; missing values are preserved.
+
+      - name: fuel_cost
+        description: Recorded fuel cost; missing values are preserved.
+
+      - name: handling_cost
+        description: Recorded handling cost.
+
+      - name: warehouse_cost
+        description: Recorded warehouse cost.
+
+      - name: customs_cost
+        description: Recorded customs cost.
+
+      - name: total_cost
+        description: Recorded total cost; not replaced with a calculated value.
+        data_tests:
+          - not_null
+
+      - name: revenue
+        description: Recorded shipment revenue; missing values are preserved as NULL.
+
+      - name: gross_profit
+        description: Recorded gross profit; not replaced with a calculated value.
+        data_tests:
+          - not_null
+
+      - name: calculated_total_cost
+        description: >
+          Sum of the five cost components when all five are present.
+          Otherwise NULL.
+
+      - name: missing_transport_cost_flag
+        description: 1 when transport cost is missing; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: missing_fuel_cost_flag
+        description: 1 when fuel cost is missing; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: total_cost_mismatch_flag
+        description: >
+          1 when all cost components are present and their sum differs
+          from recorded total cost by more than 1.00; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: gross_profit_mismatch_flag
+        description: >
+          1 when recorded gross profit differs from revenue minus total cost
+          by more than 1.00; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
