@@ -1,0 +1,67 @@
+
+version: 2
+
+models:
+  - name: stg_tracking_events
+    description: >
+      Cleaned tracking events with exact duplicate removal and flags
+      for missing shipment IDs and invalid geographic coordinates.
+
+    columns:
+      - name: tracking_event_id
+        description: Tracking event identifier.
+        data_tests:
+          - not_null
+
+      - name: shipment_id
+        description: Associated shipment identifier; missing values are preserved.
+
+      - name: event_timestamp
+        description: Tracking event timestamp converted to DATETIME2.
+        data_tests:
+          - not_null
+
+      - name: event_status
+        description: Standardized tracking event status.
+        data_tests:
+          - not_null
+
+      - name: location
+        description: Standardized event location.
+        data_tests:
+          - not_null
+
+      - name: latitude
+        description: Latitude preserved from the source.
+
+      - name: longitude
+        description: Longitude preserved from the source.
+
+      - name: event_source
+        description: Standardized source of the tracking event.
+        data_tests:
+          - not_null
+
+      - name: missing_shipment_id_flag
+        description: 1 when shipment_id is missing; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: invalid_latitude_flag
+        description: 1 when latitude is outside -90 to 90; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: invalid_longitude_flag
+        description: 1 when longitude is outside -180 to 180; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
