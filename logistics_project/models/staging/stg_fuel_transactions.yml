@@ -1,0 +1,68 @@
+
+version: 2
+
+models:
+  - name: stg_fuel_transactions
+    description: >
+      Cleaned fuel transactions with standardized fuel station names
+      and flags for non-positive litres and fuel cost discrepancies.
+
+    columns:
+      - name: fuel_transaction_id
+        description: Unique identifier for each fuel transaction.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: trip_id
+        description: Identifier of the trip associated with the transaction.
+        data_tests:
+          - not_null
+
+      - name: vehicle_id
+        description: Identifier of the vehicle associated with the transaction.
+        data_tests:
+          - not_null
+
+      - name: transaction_date
+        description: Date and time when the fuel transaction occurred.
+        data_tests:
+          - not_null
+
+      - name: litres
+        description: Fuel quantity in litres; source values are preserved to two decimal places.
+
+      - name: price_per_litre
+        description: Recorded price per litre, rounded to two decimal places.
+        data_tests:
+          - not_null
+
+      - name: fuel_cost
+        description: Recorded fuel cost; retained rather than replaced by a calculated cost.
+        data_tests:
+          - not_null
+
+      - name: fuel_station
+        description: >
+          Fuel station name trimmed, converted to uppercase, and standardized
+          by replacing commas and hyphens with spaces. Missing values remain NULL.
+
+      - name: nonpositive_litres_flag
+        description: >
+          1 when the original litres value is zero or negative;
+          otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: fuel_cost_mismatch_flag
+        description: >
+          1 when recorded fuel cost differs by more than 1.00 from
+          absolute litres multiplied by price per litre; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
