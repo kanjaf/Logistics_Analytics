@@ -1,0 +1,53 @@
+
+version: 2
+
+models:
+  - name: stg_delivery_exceptions
+    description: >
+      Cleans delivery exception records by trimming whitespace,
+      converting text values to uppercase, and standardizing
+      resolution hours to two decimal places. Missing severity
+      values are preserved for data-quality reporting.
+
+    columns:
+      - name: exception_id
+        description: Unique identifier for each delivery exception.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: shipment_id
+        description: Shipment associated with the exception.
+        data_tests:
+          - not_null
+
+      - name: exception_date
+        description: Date and time when the exception was recorded.
+        data_tests:
+          - not_null
+
+      - name: exception_type
+        description: Category of the delivery exception.
+        data_tests:
+          - not_null
+
+      - name: severity
+        description: >
+          Exception severity in uppercase. Missing values are
+          retained as NULL because the source does not provide them.
+
+      - name: resolution_status
+        description: Current resolution status in uppercase.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['OPEN', 'RESOLVED']
+
+      - name: resolution_hours
+        description: >
+          Resolution duration in hours, rounded to two decimal
+          places. Values are preserved for open and resolved
+          exceptions pending clarification of source semantics.
+        data_tests:
+          - not_null
