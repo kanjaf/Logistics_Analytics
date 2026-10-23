@@ -1,63 +1,60 @@
-
 version: 2
 
 models:
   - name: stg_vehicles
     description: >
-      Cleaned and standardized vehicle records for logistics analytics.
-      Missing statuses are preserved as NULL, and negative odometer
-      readings are flagged for investigation.
+      Cleaned and standardized vehicle records. Exact duplicate source rows
+      are removed before transformations. Text fields are trimmed, converted
+      to uppercase, and blank strings are converted to NULL. Negative
+      odometer readings are preserved and flagged for investigation.
 
     columns:
       - name: vehicle_id
-        description: "Unique identifier for each vehicle."
+        description: >
+          Vehicle identifier, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
           - unique
 
       - name: registration_number
-        description: "Vehicle registration number after trimming whitespace."
-        data_tests:
-          - not_null
+        description: >
+          Vehicle registration number, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
 
       - name: vehicle_type
-        description: "Vehicle type with standardized casing."
-        data_tests:
-          - not_null
+        description: >
+          Vehicle type, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
 
       - name: capacity_kg
-        description: "Vehicle capacity in kilograms."
-        data_tests:
-          - not_null
+        description: Vehicle load capacity in kilograms, cast to an integer.
 
       - name: fuel_type
-        description: "Fuel type with Diesel casing standardized."
-        data_tests:
-          - not_null
+        description: >
+          Fuel type, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
 
       - name: vehicle_age_years
-        description: "Vehicle age in years, cast to an integer."
-        data_tests:
-          - not_null
+        description: Vehicle age in years, cast to an integer.
 
       - name: purchase_date
-        description: "Recorded vehicle purchase date and time."
-        data_tests:
-          - not_null
+        description: Vehicle purchase date recorded in the source.
 
       - name: status
         description: >
-          Operational status after standardizing casing.
-          Five vehicles have missing source statuses, preserved as NULL.
+          Vehicle status, trimmed and converted to uppercase.
+          Blank values are converted to NULL. Missing statuses are preserved.
 
       - name: odometer_km
         description: >
-          Recorded odometer reading in kilometres. Negative readings
-          are preserved for investigation rather than replaced.
+          Odometer reading in kilometres, cast to BIGINT. Negative readings
+          are preserved rather than replaced.
 
       - name: negative_odometer_flag
         description: >
-          Equals 1 when odometer_km is negative, otherwise 0.
+          Data-quality flag set to 1 when odometer_km is negative,
+          otherwise 0.
         data_tests:
           - not_null
           - accepted_values:

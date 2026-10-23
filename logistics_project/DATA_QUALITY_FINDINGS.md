@@ -269,4 +269,33 @@ For non-missing station names, the staging model trims surrounding whitespace, c
 - Preserve missing station names as `NULL`.
 - Investigate the business meaning of negative quantities, zero-quantity transactions with positive costs, and the 2,416 cost discrepancies.
 - Confirm the expected treatment of rounding, reversals, adjustments, and other fuel-cost components with the data owner before changing any source values.
+### Route Scope Classification
 
+**Objective:** Derive a consistent route classification from the origin and destination countries instead of relying solely on the source `route_type` field.
+
+**Methodology:**
+- Map `origin_city` and `destination_city` to countries using `african_countries_cities`.
+- Exclude city names from the mapping when they correspond to more than one country, avoiding ambiguous country assignments.
+- Assign `INLAND` when the origin and destination countries are the same.
+- Assign `CROSS BORDER` when the origin and destination countries differ.
+- Leave `route_scope` as NULL if either city lacks an unambiguous country mapping.
+- Preserve the source `route_type` after text standardization for comparison and auditability.
+
+**Validation results:**
+
+| Check | Result |
+|---|---:|
+| Total staged routes | 90 |
+| INLAND routes | 23 |
+| CROSS BORDER routes | 67 |
+| Routes needing country-mapping review | 0 |
+| Routes with invalid distances | 4 |
+
+**Interpretation:** All 90 routes received a country-based classification using the current geography mapping. The resulting classification is independent of the original source `route_type`, which is retained for comparison.
+
+**Limitations:**
+- The classification depends on the accuracy of the geography reference data and the city-to-country mapping.
+- `route_scope` describes whether a route crosses a national boundary; it does not independently verify the actual road travelled or the presence of a physical border crossing.
+- The four routes with negative distances remain flagged for investigation. Their distance values have not been corrected.
+
+**Treatment:** Use `route_scope` for consistent inland-versus-cross-border analysis while retaining the original `route_type` and `border_crossing` fields for traceability.

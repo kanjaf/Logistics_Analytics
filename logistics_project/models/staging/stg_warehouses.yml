@@ -1,52 +1,67 @@
-
 version: 2
 
 models:
   - name: stg_warehouses
     description: >
       Cleaned and standardized warehouse records for logistics analytics.
-      Warehouse names and city names are uppercase. Exact duplicate rows
-      are removed, and blank text values are converted to NULL.
+      Exact duplicate source rows are removed before transformations.
+      Text fields are trimmed, converted to uppercase, and blank text values
+      are converted to NULL. Capacity and operating cost values are preserved
+      for validation.
 
     columns:
       - name: warehouse_id
-        description: "Unique identifier for each warehouse."
+        description: >
+          Unique warehouse identifier, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
           - unique
 
       - name: warehouse_name
-        description: "Warehouse name standardized to uppercase."
+        description: >
+          Warehouse name, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
 
       - name: city
-        description: "Warehouse city standardized to uppercase."
+        description: >
+          Warehouse city, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
 
       - name: country
-        description: "Country where the warehouse is located."
+        description: >
+          Country where the warehouse is located, trimmed and converted
+          to uppercase. Blank values are converted to NULL.
         data_tests:
           - not_null
 
       - name: warehouse_type
-        description: "Classification of the warehouse facility."
+        description: >
+          Warehouse facility classification, trimmed and converted to
+          uppercase. Blank values are converted to NULL.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values:
-                  - Fulfillment Center
-                  - Regional Hub
-                  - Cross-Dock
+                  - FULFILLMENT CENTER
+                  - REGIONAL HUB
+                  - CROSS-DOCK
 
       - name: capacity_units
-        description: "Recorded warehouse capacity in units."
+        description: >
+          Recorded warehouse capacity in units, cast to an integer.
+          Values are preserved for validation.
         data_tests:
           - not_null
 
       - name: operating_cost_per_day
-        description: "Recorded daily operating cost."
+        description: >
+          Recorded daily operating cost, cast to BIGINT.
+          Values are preserved for validation.
         data_tests:
           - not_null

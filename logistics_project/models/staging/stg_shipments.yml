@@ -1,29 +1,34 @@
-
 version: 2
 
 models:
   - name: stg_shipments
     description: >
-      Cleaned and standardized shipment records. Preserves source delivery
-      fields and exposes identified data-quality issues through explicit flags.
+      Cleaned and standardized shipment records. Exact duplicate source rows
+      are removed before transformations. Text fields are trimmed, converted
+      to uppercase, and blank strings are converted to NULL. Source delivery
+      fields are preserved, and identified data-quality issues are exposed
+      through explicit flags.
 
     columns:
       - name: shipment_id
-        description: "Unique identifier for each shipment."
+        description: >
+          Shipment identifier, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
           - unique
 
       - name: customer_id
         description: >
-          Identifier of the customer associated with the shipment.
+          Customer identifier associated with the shipment, trimmed and
+          converted to uppercase. Blank values are converted to NULL.
           Missing values are preserved when absent from the source.
 
       - name: delivery_status
         description: >
-          Original delivery status after trimming whitespace and converting
-          blank strings to NULL. Status values are not standardized to one
-          canonical spelling in this staging model.
+          Source delivery status, trimmed and converted to uppercase.
+          Blank values are converted to NULL. The source status is preserved
+          rather than recalculated from delivery dates.
 
       - name: is_delayed
         description: >

@@ -1,62 +1,103 @@
-
 version: 2
 
 models:
   - name: stg_routes
     description: >
       Cleaned and standardized route records for logistics analytics.
-      Non-positive distances are preserved and flagged for investigation.
-      Source border-crossing values of 'None' are preserved.
+      Exact duplicate source rows are removed before transformations.
+      Text fields are trimmed, converted to uppercase, and blank strings
+      are converted to NULL. Hyphens in text fields are replaced with spaces.
+      Origin and destination countries are derived from the city geography
+      mapping. Route scope is classified as INLAND when both cities map to
+      the same country and CROSS BORDER when they map to different countries.
+      Routes with missing or ambiguous country mappings receive a NULL
+      route_scope. Non-positive distances are preserved and flagged for
+      investigation. Source route_type and border_crossing values are preserved
+      after text standardization.
 
     columns:
       - name: route_id
-        description: "Unique identifier for each route."
+        description: >
+          Unique route identifier, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
           - unique
 
       - name: origin_city
-        description: "Origin city with standardized casing."
+        description: >
+          Origin city, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
 
       - name: destination_city
-        description: "Destination city with standardized casing."
+        description: >
+          Destination city, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
 
       - name: distance_km
         description: >
-          Recorded route distance in kilometres. Non-positive values
-          are retained for investigation rather than replaced.
+          Recorded route distance in kilometres, cast to an integer.
+          Non-positive values are retained for investigation rather than replaced.
         data_tests:
           - not_null
 
       - name: route_type
-        description: "Route classification with Cross-Border labels standardized."
+        description: >
+          Original source route classification, trimmed and converted to
+          uppercase. Hyphens are replaced with spaces, and blank values
+          are converted to NULL. Preserved for comparison with route_scope.
         data_tests:
           - not_null
 
       - name: border_crossing
         description: >
-          Recorded border crossing. The literal value 'None' is preserved
-          because its business meaning has not been independently verified.
+          Recorded source border-crossing value, trimmed and converted to
+          uppercase. Blank values are converted to NULL. The literal source
+          value NONE is preserved because its business meaning has not been
+          independently verified.
         data_tests:
           - not_null
 
       - name: standard_transit_hours
-        description: "Standard transit time in hours, rounded to two decimals."
+        description: >
+          Standard transit time in hours, rounded to two decimal places
+          and cast to DECIMAL.
         data_tests:
           - not_null
 
       - name: road_quality
-        description: "Road quality category with standardized casing."
+        description: >
+          Road quality category, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
+
+      - name: origin_country
+        description: >
+          Country mapped from origin_city using the geography reference data.
+          Stored in uppercase. Remains NULL if the city has no unique country
+          mapping.
+
+      - name: destination_country
+        description: >
+          Country mapped from destination_city using the geography reference
+          data. Stored in uppercase. Remains NULL if the city has no unique
+          country mapping.
+
+      - name: route_scope
+        description: >
+          Derived route classification. INLAND when origin_country and
+          destination_country are equal; CROSS BORDER when they differ.
+          NULL when either country cannot be mapped unambiguously.
 
       - name: invalid_distance_flag
         description: >
           Equals 1 when distance_km is zero or negative, otherwise 0.
+          Four routes are currently flagged for investigation.
         data_tests:
           - not_null
           - accepted_values:

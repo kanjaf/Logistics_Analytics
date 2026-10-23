@@ -1,35 +1,66 @@
 
 -- Model: stg_shipments
--- Purpose: Clean and standardize raw shipment data while preserving
--- source values and exposing identified data-quality issues.
+-- Purpose: Clean and standardize shipment records for logistics analytics.
 --
--- Source: raw_logistics.shipments
---
--- Data-quality principles:
--- 1. Remove exact duplicate rows.
--- 2. Standardize whitespace and convert blank strings to NULL.
--- 3. Cast numeric fields to appropriate data types.
--- 4. Preserve original delivery status, dates, and delay indicator.
--- 5. Add explicit flags instead of silently correcting conflicting data.
+-- Data-quality decisions:
+-- 1. Remove exact duplicate source rows using original source values.
+-- 2. Trim whitespace, convert text to uppercase, and convert blank text values to NULL.
+-- 3. Preserve source delivery dates, status, and delay indicator.
+-- 4. Flag disagreements between the source delay indicator and delivery dates.
+-- 5. Flag IN TRANSIT shipments with a populated actual delivery date.
+-- 6. Preserve source values when data-quality issues are detected.
 
 WITH source_data AS (
-    SELECT *
+
+    SELECT
+        *,
+        ROW_NUMBER() OVER (
+            PARTITION BY
+                shipment_id,
+                customer_id,
+                trip_id,
+                route_id,
+                booking_date,
+                shipment_type,
+                priority,
+                origin,
+                destination,
+                weight_kg,
+                volume_m3,
+                shipment_value,
+                expected_delivery_date,
+                actual_delivery_date,
+                delivery_status,
+                is_delayed,
+                delay_days
+            ORDER BY (SELECT NULL)
+        ) AS source_row_number
     FROM {{ source('raw_logistics', 'shipments') }}
+
+),
+
+deduplicated AS (
+
+    SELECT *
+    FROM source_data
+    WHERE source_row_number = 1
+
 ),
 
 cleaned AS (
-    SELECT DISTINCT
-        NULLIF(LTRIM(RTRIM(shipment_id)), '') AS shipment_id,
-        NULLIF(LTRIM(RTRIM(customer_id)), '') AS customer_id,
-        NULLIF(LTRIM(RTRIM(trip_id)), '') AS trip_id,
-        NULLIF(LTRIM(RTRIM(route_id)), '') AS route_id,
+
+    SELECT
+        UPPER(NULLIF(LTRIM(RTRIM(shipment_id)), '')) AS shipment_id,
+        UPPER(NULLIF(LTRIM(RTRIM(customer_id)), '')) AS customer_id,
+        UPPER(NULLIF(LTRIM(RTRIM(trip_id)), '')) AS trip_id,
+        UPPER(NULLIF(LTRIM(RTRIM(route_id)), '')) AS route_id,
 
         booking_date,
 
-        NULLIF(LTRIM(RTRIM(shipment_type)), '') AS shipment_type,
-        NULLIF(LTRIM(RTRIM(priority)), '') AS priority,
-        NULLIF(LTRIM(RTRIM(origin)), '') AS origin,
-        NULLIF(LTRIM(RTRIM(destination)), '') AS destination,
+        UPPER(NULLIF(LTRIM(RTRIM(shipment_type)), '')) AS shipment_type,
+        UPPER(NULLIF(LTRIM(RTRIM(priority)), '')) AS priority,
+        UPPER(NULLIF(LTRIM(RTRIM(origin)), '')) AS origin,
+        UPPER(NULLIF(LTRIM(RTRIM(destination)), '')) AS destination,
 
         CAST(weight_kg AS DECIMAL(12, 2)) AS weight_kg,
         CAST(volume_m3 AS DECIMAL(12, 3)) AS volume_m3,
@@ -38,23 +69,16 @@ cleaned AS (
         expected_delivery_date,
         actual_delivery_date,
 
-        NULLIF(LTRIM(RTRIM(delivery_status)), '') AS delivery_status,
+        UPPER(
+            NULLIF(LTRIM(RTRIM(delivery_status)), '')
+        ) AS delivery_status,
 
         -- Preserve the source-system delay indicator.
-        -- This field is not recalculated from the delivery dates.
         is_delayed,
 
-        -- DATA-QUALITY FLAG: delay_flag_mismatch
-        -- 1 = The source delay indicator disagrees with the date comparison.
-        -- 0 = The source delay indicator agrees with the date comparison.
-        -- NULL = A date is missing, so the comparison cannot be evaluated.
-        --
-        -- Business rule used for this check:
-        -- A shipment is late by dates when actual_delivery_date
-        -- is later than expected_delivery_date.
-        --
-        -- This flag identifies a disagreement; it does not determine
-        -- which source field is correct.
+        -- 1 = Source delay indicator disagrees with delivery dates.
+        -- 0 = No disagreement detected.
+        -- NULL = A required date is missing.
         CASE
             WHEN actual_delivery_date IS NULL
               OR expected_delivery_date IS NULL
@@ -73,17 +97,8 @@ cleaned AS (
 
         CAST(delay_days AS INT) AS delay_days,
 
-        -- DATA-QUALITY FLAG: in_transit_with_actual_date_flag
-        -- 1 = The normalized delivery status is IN TRANSIT,
-        --     but an actual delivery date is populated.
-        -- 0 = This specific inconsistency was not detected.
-        --
-        -- Underscores are replaced with spaces so both
-        -- 'IN_TRANSIT' and 'In Transit' are recognized.
-        --
-        -- A populated actual date does not independently prove
-        -- that delivery occurred. Preserve both source fields
-        -- for investigation rather than changing either value.
+        -- 1 = IN TRANSIT status with an actual delivery date.
+        -- Preserve both source values for investigation.
         CASE
             WHEN UPPER(
                 REPLACE(
@@ -97,7 +112,8 @@ cleaned AS (
             ELSE 0
         END AS in_transit_with_actual_date_flag
 
-    FROM source_data
+    FROM deduplicated
+
 )
 
 SELECT *

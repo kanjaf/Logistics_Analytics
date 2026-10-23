@@ -1,69 +1,106 @@
 
 -- Model: stg_routes
--- Purpose: Clean and standardize route records for logistics analytics.
+-- Purpose: Standardize route records and derive route scope from country mappings.
 --
 -- Data-quality decisions:
--- 1. Remove exact duplicate rows defensively.
--- 2. Trim text and convert blank strings to NULL.
--- 3. Standardize city-name casing.
--- 4. Standardize route type labels.
--- 5. Preserve the source distance and flag non-positive values.
--- 6. Preserve 'None' in border_crossing because its business meaning
---    has not yet been independently verified.
--- 7. Round transit hours to two decimal places to remove float artifacts.
+-- 1. Remove exact duplicate source rows using original source values.
+-- 2. Use clean_text to trim, uppercase, replace hyphens with spaces,
+--    and convert blank strings to NULL.
+-- 3. Derive route_scope from origin and destination countries.
+-- 4. Preserve original route_type for auditability.
+-- 5. Preserve source distances and flag non-positive values.
+-- 6. Preserve NONE in border_crossing because its meaning is unverified.
+-- 7. Round transit hours to two decimal places.
+-- 8. Leave route_scope NULL when either city has an ambiguous or
+--    unmatched country mapping.
 
 WITH source_data AS (
-    SELECT *
+    SELECT
+        route_id,
+        origin_city,
+        destination_city,
+        distance_km,
+        route_type,
+        border_crossing,
+        standard_transit_hours,
+        road_quality,
+        ROW_NUMBER() OVER (
+            PARTITION BY
+                route_id,
+                origin_city,
+                destination_city,
+                distance_km,
+                route_type,
+                border_crossing,
+                standard_transit_hours,
+                road_quality
+            ORDER BY (SELECT NULL)
+        ) AS source_row_number
     FROM {{ source('raw_logistics', 'routes') }}
 ),
 
-cleaned AS (
-    SELECT DISTINCT
-        NULLIF(LTRIM(RTRIM(route_id)), '') AS route_id,
-
-        CASE
-            WHEN NULLIF(LTRIM(RTRIM(origin_city)), '') IS NULL THEN NULL
-            ELSE UPPER(LEFT(LTRIM(RTRIM(origin_city)), 1))
-                 + LOWER(SUBSTRING(
-                     LTRIM(RTRIM(origin_city)),
-                     2,
-                     LEN(LTRIM(RTRIM(origin_city)))
-                 ))
-        END AS origin_city,
-
-        CASE
-            WHEN NULLIF(LTRIM(RTRIM(destination_city)), '') IS NULL THEN NULL
-            ELSE UPPER(LEFT(LTRIM(RTRIM(destination_city)), 1))
-                 + LOWER(SUBSTRING(
-                     LTRIM(RTRIM(destination_city)),
-                     2,
-                     LEN(LTRIM(RTRIM(destination_city)))
-                 ))
-        END AS destination_city,
-
-        CAST(distance_km AS INT) AS distance_km,
-
-        CASE
-            WHEN LOWER(REPLACE(LTRIM(RTRIM(route_type)), '-', ' ')) = 'cross border'
-                THEN 'Cross-Border'
-            WHEN NULLIF(LTRIM(RTRIM(route_type)), '') IS NULL THEN NULL
-            ELSE LTRIM(RTRIM(route_type))
-        END AS route_type,
-
-        NULLIF(LTRIM(RTRIM(border_crossing)), '') AS border_crossing,
-
-        CAST(ROUND(standard_transit_hours, 2) AS DECIMAL(8, 2))
-            AS standard_transit_hours,
-
-        CASE
-            WHEN LOWER(LTRIM(RTRIM(road_quality))) = 'good' THEN 'Good'
-            WHEN LOWER(LTRIM(RTRIM(road_quality))) = 'moderate' THEN 'Moderate'
-            WHEN LOWER(LTRIM(RTRIM(road_quality))) = 'poor' THEN 'Poor'
-            WHEN NULLIF(LTRIM(RTRIM(road_quality)), '') IS NULL THEN NULL
-            ELSE LTRIM(RTRIM(road_quality))
-        END AS road_quality
-
+deduplicated AS (
+    SELECT
+        route_id,
+        origin_city,
+        destination_city,
+        distance_km,
+        route_type,
+        border_crossing,
+        standard_transit_hours,
+        road_quality
     FROM source_data
+    WHERE source_row_number = 1
+),
+
+city_country_counts AS (
+    SELECT
+        UPPER(LTRIM(RTRIM(city))) AS city,
+        COUNT(DISTINCT UPPER(LTRIM(RTRIM(country))))
+            AS country_count
+    FROM {{ source('raw_logistics', 'african_countries_cities') }}
+    GROUP BY UPPER(LTRIM(RTRIM(city)))
+),
+
+unique_city_countries AS (
+    SELECT
+        UPPER(LTRIM(RTRIM(M.city))) AS city,
+        MAX(UPPER(LTRIM(RTRIM(M.country)))) AS country
+    FROM {{ source('raw_logistics', 'african_countries_cities') }} AS M
+    INNER JOIN city_country_counts AS C
+        ON UPPER(LTRIM(RTRIM(M.city))) = C.city
+    WHERE C.country_count = 1
+    GROUP BY UPPER(LTRIM(RTRIM(M.city)))
+),
+
+cleaned AS (
+    SELECT
+        {{ clean_text('R.route_id') }} AS route_id,
+        {{ clean_text('R.origin_city') }} AS origin_city,
+        {{ clean_text('R.destination_city') }} AS destination_city,
+
+        CAST(R.distance_km AS INT) AS distance_km,
+
+        {{ clean_text('R.route_type') }} AS route_type,
+        {{ clean_text('R.border_crossing') }} AS border_crossing,
+
+        CAST(
+            ROUND(R.standard_transit_hours, 2)
+            AS DECIMAL(8, 2)
+        ) AS standard_transit_hours,
+
+        {{ clean_text('R.road_quality') }} AS road_quality,
+
+        UPPER(LTRIM(RTRIM(O.country))) AS origin_country,
+        UPPER(LTRIM(RTRIM(D.country))) AS destination_country
+
+    FROM deduplicated AS R
+
+    LEFT JOIN unique_city_countries AS O
+        ON UPPER(LTRIM(RTRIM(R.origin_city))) = O.city
+
+    LEFT JOIN unique_city_countries AS D
+        ON UPPER(LTRIM(RTRIM(R.destination_city))) = D.city
 ),
 
 flagged AS (
@@ -72,9 +109,17 @@ flagged AS (
         CASE
             WHEN distance_km <= 0 THEN 1
             ELSE 0
-        END AS invalid_distance_flag
+        END AS invalid_distance_flag,
+
+        CASE
+            WHEN origin_country IS NULL
+              OR destination_country IS NULL THEN NULL
+            WHEN origin_country = destination_country THEN 'INLAND'
+            ELSE 'CROSS BORDER'
+        END AS route_scope
+
     FROM cleaned
 )
 
 SELECT *
-FROM flagged;
+FROM flagged

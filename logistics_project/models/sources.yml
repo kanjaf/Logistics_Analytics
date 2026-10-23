@@ -1,3 +1,4 @@
+
 version: 2
 
 sources:
@@ -6,6 +7,7 @@ sources:
     schema: dbo
     description: "Raw logistics data loaded into SQL Server."
     tables:
+      - name: african_countries_cities
       - name: customers
       - name: customs
       - name: date_dimension

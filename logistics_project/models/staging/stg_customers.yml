@@ -1,30 +1,59 @@
-
 version: 2
 
 models:
   - name: stg_customers
-    description: "Cleaned customer staging model with country derived from a geography reference dataset."
+    description: >
+      Cleaned and standardized customer staging model. Exact duplicate source
+      rows are removed before transformations. Text fields are trimmed,
+      converted to uppercase, and blank strings are converted to NULL.
+      Embedded spaces are removed from customer_id and customer_segment.
+      Country information is derived from a geography reference dataset
+      using the customer's city.
 
     columns:
       - name: customer_id
-        description: "Unique identifier for each customer."
+        description: >
+          Unique customer identifier, trimmed and converted to uppercase.
+          Embedded spaces are removed and blank values are converted to NULL.
         data_tests:
           - not_null
           - unique
 
       - name: customer_name
+        description: >
+          Customer name, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
         data_tests:
           - not_null
 
       - name: customer_segment
+        description: >
+          Customer segment, trimmed and converted to uppercase.
+          Embedded spaces are removed and blank values are converted to NULL.
+        data_tests:
+          - not_null
+
+      - name: city
+        description: >
+          Customer city, trimmed and converted to uppercase.
+          Blank values are converted to NULL.
+
+      - name: derived_country
+        description: >
+          Country derived by matching the customer's city to the geography
+          reference dataset. Unmatched cities remain NULL.
         data_tests:
           - not_null
 
       - name: account_created_date
+        description: Date the customer account was created.
         data_tests:
           - not_null
 
-      - name: derived_country
-        description: "Country assigned using the customer's city and the geography reference dataset."
-        data_tests:
-          - not_null
+      - name: credit_limit
+        description: Customer credit limit recorded in the source.
+
+      - name: customer_rating
+        description: >
+          Customer rating rounded to two decimal places and cast to
+          DECIMAL(3,2). Missing ratings are preserved as NULL.
