@@ -1,3 +1,4 @@
+
 name: 'logistics_project'
 version: '1.0.0'
 config-version: 2
@@ -15,7 +16,12 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+vars:
+  late_grace_minutes: 0
+  
 models:
   logistics_project:
     staging:
       +materialized: view
+    marts:
+      +materialized: table

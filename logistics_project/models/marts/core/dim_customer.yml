@@ -1,0 +1,29 @@
+
+version: 2
+
+models:
+  - name: dim_customer
+    description: >
+      Customer dimension containing customer identity, segment,
+      geography, account details, credit limit, rating, and tenure.
+
+    columns:
+      - name: customer_id
+        description: Unique identifier for each customer.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        description: Standardized customer name.
+        data_tests:
+          - not_null
+
+      - name: customer_segment
+        description: Customer's business segment.
+
+      - name: country
+        description: Customer's derived country.
+
+      - name: customer_rating
+        description: Customer rating from the source system.

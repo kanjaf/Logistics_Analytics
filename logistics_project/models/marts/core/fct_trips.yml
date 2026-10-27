@@ -1,0 +1,48 @@
+
+version: 2
+
+models:
+  - name: fct_trips
+    description: >
+      Trip-level fact table containing one row per trip, operational
+      duration and arrival metrics, shipment counts, and data-quality flags.
+
+    columns:
+      - name: trip_id
+        description: Unique identifier for each trip.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: trip_status
+        description: Standardized status of the trip.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Completed
+                  - Cancelled
+
+      - name: is_completed
+        description: 1 when a trip is completed; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: late_arrival_flag
+        description: >
+          1 when a completed trip arrives beyond the configured grace
+          period, 0 when it arrives within the period, and NULL when
+          arrival performance cannot be evaluated.
+
+      - name: no_shipment_link_flag
+        description: >
+          1 when no shipment references the trip; otherwise 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]

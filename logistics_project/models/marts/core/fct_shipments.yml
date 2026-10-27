@@ -1,0 +1,58 @@
+
+version: 2
+
+models:
+  - name: fct_shipments
+    description: >
+      Shipment-level fact table combining shipment details, delivery
+      performance, financial metrics, and data-quality flags.
+      Grain: one row per shipment.
+
+    columns:
+      - name: shipment_id
+        description: Unique identifier for each shipment.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: delivery_status
+        description: Standardized shipment delivery status.
+        data_tests:
+          - not_null
+
+      - name: late_delivery_flag
+        description: >
+          1 when delivered after the expected date, 0 when delivered
+          on or before the expected date, and NULL when the dates
+          needed to assess delivery performance are missing.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+              config:
+                where: "late_delivery_flag IS NOT NULL"
+
+      - name: delay_flag_mismatch
+        description: >
+          Flags disagreements between the source delay indicator
+          and delivery dates.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+              config:
+                where: "delay_flag_mismatch IS NOT NULL"
+
+      - name: total_cost_mismatch_flag
+        description: Flags discrepancies between recorded and calculated costs.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: gross_profit_mismatch_flag
+        description: Flags discrepancies between recorded and calculated profit.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
