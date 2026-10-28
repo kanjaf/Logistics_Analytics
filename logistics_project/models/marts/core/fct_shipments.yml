@@ -15,6 +15,18 @@ models:
           - not_null
           - unique
 
+      - name: customer_id
+        description: >
+          Customer identifier linked to dim_customer.
+          Missing or unresolved source customer references are
+          mapped to the UNKNOWN dimension member.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_id
+
       - name: delivery_status
         description: Standardized shipment delivery status.
         data_tests:

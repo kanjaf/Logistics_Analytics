@@ -5,25 +5,71 @@ models:
   - name: dim_customer
     description: >
       Customer dimension containing customer identity, segment,
-      geography, account details, credit limit, rating, and tenure.
+      geography, account creation date, credit limit, and rating.
+      Includes an UNKNOWN member for missing or unresolved customer
+      references from shipment records.
 
     columns:
       - name: customer_id
-        description: Unique identifier for each customer.
+        description: >
+          Unique customer identifier. Includes the UNKNOWN member
+          for missing or unresolved customer references.
         data_tests:
           - not_null
           - unique
 
       - name: customer_name
-        description: Standardized customer name.
+        description: >
+          Standardized customer name. The UNKNOWN member uses
+          the placeholder value Unknown.
         data_tests:
           - not_null
 
       - name: customer_segment
         description: Customer's business segment.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - NGO
+                  - AUTOMOTIVE
+                  - CONSTRUCTION
+                  - FMCG
+                  - E-COMMERCE
+                  - PHARMACEUTICAL
+                  - GOVERNMENT
+                  - AGRICULTURE
+                  - MANUFACTURING
+                  - RETAIL
+                  - Unknown
+
+      - name: city
+        description: >
+          Customer's city of residence or business location.
+          The UNKNOWN member uses the placeholder value Unknown.
 
       - name: country
-        description: Customer's derived country.
+        description: >
+          Customer's derived country based on the project's
+          geographic mapping. The UNKNOWN member uses the
+          placeholder value Unknown.
+
+      - name: account_created_date
+        description: >
+          Date the customer account was created, cast to DATE
+          without a time component. NULL for the UNKNOWN member.
+
+      - name: credit_limit
+        description: >
+          Credit limit recorded for the customer in the source system.
+          NULL for the UNKNOWN member.
+        data_tests:
+          - not_null:
+              config:
+                where: "customer_id != 'UNKNOWN'"
 
       - name: customer_rating
-        description: Customer rating from the source system.
+        description: >
+          Customer rating recorded in the source system.
+          May be NULL when no rating is available, including
+          for the UNKNOWN member.
