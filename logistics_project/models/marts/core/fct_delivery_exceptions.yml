@@ -1,0 +1,51 @@
+
+version: 2
+
+models:
+  - name: fct_delivery_exceptions
+    description: >
+      Delivery exception fact table containing one row per recorded
+      delivery exception. Supports analysis of exception frequency,
+      severity, resolution status and resolution duration.
+
+    columns:
+      - name: exception_id
+        description: "Unique identifier for each delivery exception."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: shipment_id
+        description: "Shipment associated with the delivery exception."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_shipments')
+                field: shipment_id
+
+      - name: exception_date
+        description: "Date on which the delivery exception was recorded."
+        data_tests:
+          - not_null
+
+      - name: exception_type
+        description: "Classification of the delivery exception."
+
+      - name: severity
+        description: >
+          Recorded severity classification. NULL values are preserved
+          where severity was not provided.
+
+      - name: resolution_status
+        description: "Current resolution status, such as OPEN or RESOLVED."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['OPEN', 'RESOLVED']
+
+      - name: resolution_hours
+        description: >
+          Recorded resolution duration in hours. Values are preserved
+          as supplied by the staging model.
