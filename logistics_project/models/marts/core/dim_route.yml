@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_route
+    description: >
+      Route dimension containing one row per route, plus an UNKNOWN
+      member for unresolved route references. Preserves recorded route
+      attributes, including distance and standard transit time.
+
+    columns:
+      - name: route_id
+        description: "Unique identifier for each route, including the UNKNOWN member."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: origin_city
+        description: "Standardized route origin city."
+
+      - name: destination_city
+        description: "Standardized route destination city."
+
+      - name: distance_km
+        description: >
+          Recorded route distance in kilometres. Negative source values
+          are preserved for data-quality investigation.
+
+      - name: route_type
+        description: "Recorded route classification."
+
+      - name: border_crossing
+        description: "Indicates whether the route involves a border crossing."
+
+      - name: standard_transit_hours
+        description: "Recorded standard transit duration in hours."
+
+      - name: road_quality
+        description: "Recorded road quality classification."
