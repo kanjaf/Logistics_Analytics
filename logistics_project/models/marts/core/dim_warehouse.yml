@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: dim_warehouse
+    description: >
+      Warehouse dimension containing one row per warehouse, plus an UNKNOWN
+      member to support unresolved warehouse references.
+
+    columns:
+      - name: warehouse_id
+        description: "Unique identifier for each warehouse, including the UNKNOWN member."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: warehouse_name
+        description: "Standardized warehouse name."
+        data_tests:
+          - not_null
+
+      - name: city
+        description: "Warehouse city."
+
+      - name: country
+        description: "Warehouse country."
+
+      - name: warehouse_type
+        description: "Warehouse classification or type."
+
+      - name: capacity_units
+        description: "Recorded warehouse capacity in units."
+
+      - name: operating_cost_per_day
+        description: "Recorded daily warehouse operating cost."
