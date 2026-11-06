@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: >
+      Continuous calendar dimension generated dynamically from the earliest
+      and latest dates found across logistics staging models. Provides
+      calendar attributes for shipment, trip, fuel, customs, tracking
+      and delivery exception analysis.
+
+    columns:
+      - name: date_key
+        description: "Date key in YYYYMMDD integer format."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: full_date
+        description: "Complete calendar date."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: day_number
+        description: "Day of the month, from 1 to 31."
+
+      - name: day_name
+        description: "Name of the weekday."
+
+      - name: day_of_week
+        description: "Numeric weekday, Monday = 1 through Sunday = 7."
+
+      - name: week_start_date
+        description: "Monday date marking the start of the calendar week."
+
+      - name: days_in_month
+        description: "Total number of calendar days in the month."
+
+      - name: day_of_year
+        description: "Day number within the calendar year."
+
+      - name: month_number
+        description: "Month number, from 1 to 12."
+
+      - name: month_name
+        description: "Full month name."
+
+      - name: month_name_short
+        description: "Three-letter month abbreviation."
+
+      - name: month_number_sort
+        description: "Numeric month value used for chronological sorting."
+
+      - name: year_month_sort
+        description: "Integer YYYYMM value for chronological month sorting."
+
+      - name: quarter_number
+        description: "Calendar quarter number, from 1 to 4."
+
+      - name: quarter_name
+        description: "Calendar quarter label, such as Q1 or Q2."
+
+      - name: year_number
+        description: "Calendar year."
+
+      - name: year_month
+        description: "Year and month label in YYYY-MM format."
+
+      - name: year_quarter
+        description: "Year and quarter label, such as 2025-Q1."
+
+      - name: is_month_end
+        description: "Flag identifying the final calendar day of a month."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: is_weekend
+        description: "Flag identifying Saturday and Sunday."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
