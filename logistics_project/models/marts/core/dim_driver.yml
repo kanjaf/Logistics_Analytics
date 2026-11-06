@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: dim_driver
+    description: >
+      Driver dimension containing one row per driver, plus an UNKNOWN
+      member to support trips with missing driver references.
+
+    columns:
+      - name: driver_id
+        description: "Unique identifier for each driver, including the UNKNOWN member."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: driver_name
+        description: "Driver's name, standardized in the staging model."
+        data_tests:
+          - not_null
+
+      - name: gender
+        description: "Driver's recorded gender."
+
+      - name: hire_date
+        description: "Date and time the driver was hired."
+
+      - name: experience_years
+        description: "Driver's recorded years of experience."
+
+      - name: license_class
+        description: "Driver's licence class."
+
+      - name: home_city
+        description: "Driver's recorded home city."
+
+      - name: safety_score
+        description: >
+          Driver safety score rounded to two decimal places.
+          Missing source scores remain NULL.

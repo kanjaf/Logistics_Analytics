@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: dim_vehicle
+    description: >
+      Vehicle dimension containing one row per vehicle, plus an UNKNOWN
+      member to support trips with missing vehicle references. Preserves
+      recorded vehicle attributes and data-quality flags.
+
+    columns:
+      - name: vehicle_id
+        description: "Unique identifier for each vehicle, including the UNKNOWN member."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: registration_number
+        description: "Vehicle registration number."
+
+      - name: vehicle_type
+        description: "Recorded vehicle type."
+
+      - name: capacity_kg
+        description: "Vehicle carrying capacity in kilograms."
+
+      - name: fuel_type
+        description: "Vehicle fuel type."
+
+      - name: vehicle_age_years
+        description: "Vehicle age in years, as recorded in staging."
+
+      - name: purchase_date
+        description: "Recorded vehicle purchase date."
+
+      - name: status
+        description: "Recorded vehicle operational status."
+
+      - name: odometer_km
+        description: "Recorded odometer reading in kilometres."
+
+      - name: negative_odometer_flag
+        description: "Flag identifying negative odometer readings."
