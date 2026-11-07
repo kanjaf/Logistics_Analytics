@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: fct_tracking_events
+    description: >
+      Tracking event fact table containing one row per shipment tracking
+      event. Supports analysis of shipment journeys, tracking milestones,
+      event locations, geographic coordinates and shipment timelines.
+      Preserves all source events, including missing and unmatched
+      shipment references.
+
+    columns:
+      - name: tracking_event_id
+        description: Unique identifier for each tracking event.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: shipment_id
+        description: Original shipment identifier from the tracking source. May be NULL or unmatched.
+
+      - name: shipment_reference_status
+        description: >
+          Indicates whether the original shipment reference matches
+          fct_shipments, is missing, or is unmatched.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['MATCHED', 'MISSING', 'UNMATCHED']
+
+      - name: date_key
+        description: Integer date key derived from the tracking event timestamp in YYYYMMDD format.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: event_timestamp
+        description: Timestamp when the tracking event was recorded.
+        data_tests:
+          - not_null
+
+      - name: event_status
+        description: Tracking milestone or event type recorded for the shipment.
+
+      - name: location
+        description: Recorded geographic or operational location of the tracking event.
+
+      - name: latitude
+        description: Recorded latitude coordinate. Missing and invalid values are preserved.
+
+      - name: longitude
+        description: Recorded longitude coordinate. Missing and invalid values are preserved.
+
+      - name: event_source
+        description: Source or system that generated the tracking event.
+
+      - name: missing_shipment_id_flag
+        description: Indicates whether the original shipment identifier was missing.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: invalid_latitude_flag
+        description: Indicates whether the recorded latitude is outside the valid geographic range.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: invalid_longitude_flag
+        description: Indicates whether the recorded longitude is outside the valid geographic range.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
