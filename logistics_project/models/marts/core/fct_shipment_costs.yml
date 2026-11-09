@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: fct_shipment_costs
+    description: >
+      Shipment cost fact model containing one row per shipment cost record.
+      Supports analysis of logistics expenditure, revenue, and profitability.
+      Preserves recorded financial measures, calculated values, and
+      data-quality flags.
+
+    columns:
+      - name: cost_id
+        description: Unique identifier for each shipment cost record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: shipment_id
+        description: Identifier of the shipment associated with the cost record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_shipments')
+                field: shipment_id
+
+      - name: transport_cost
+        description: Recorded transportation cost. May be NULL.
+
+      - name: fuel_cost
+        description: Recorded fuel cost. May be NULL.
+
+      - name: handling_cost
+        description: Recorded handling cost.
+
+      - name: warehouse_cost
+        description: Recorded warehouse cost.
+
+      - name: customs_cost
+        description: Recorded customs cost.
+
+      - name: total_cost
+        description: Original recorded total shipment cost.
+        data_tests:
+          - not_null
+
+      - name: calculated_total_cost
+        description: >
+          Sum of the five cost components, calculated only when all
+          components are available.
+
+      - name: revenue
+        description: Recorded revenue associated with the shipment.
+
+      - name: gross_profit
+        description: Original recorded gross profit.
+        data_tests:
+          - not_null
+
+      - name: calculated_gross_profit
+        description: >
+          Derived gross profit calculated as revenue minus recorded
+          total cost when revenue is available.
+
+      - name: missing_transport_cost_flag
+        description: Indicates whether transport cost is missing.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: missing_fuel_cost_flag
+        description: Indicates whether fuel cost is missing.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: total_cost_mismatch_flag
+        description: Indicates whether recorded total cost differs from calculated total cost.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: gross_profit_mismatch_flag
+        description: Indicates whether recorded gross profit differs from calculated gross profit.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
