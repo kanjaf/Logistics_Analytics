@@ -1,0 +1,99 @@
+
+version: 2
+
+models:
+  - name: fct_fuel_transactions
+    description: >
+      Fuel transaction fact table containing one row per fuel transaction.
+      Supports analysis of fuel expenditure, implied fuel consumption,
+      vehicle-level fuel usage and trip-level fuel efficiency.
+      Preserves original recorded litres and derives implied litres
+      using recorded fuel cost and price per litre.
+
+    columns:
+      - name: fuel_transaction_id
+        description: Unique identifier for each fuel transaction.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: trip_id
+        description: Trip associated with the fuel transaction.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_trips')
+                field: trip_id
+
+      - name: trip_vehicle_id
+        description: Vehicle assigned to the associated trip.
+
+      - name: vehicle_id
+        description: Vehicle recorded against the fuel transaction.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_vehicle')
+                field: vehicle_id
+
+      - name: registration_number
+        description: Registration number of the vehicle associated with the transaction.
+
+      - name: date_key
+        description: Integer date key derived from transaction_date in YYYYMMDD format.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: transaction_date
+        description: Date and time when the fuel transaction was recorded.
+        data_tests:
+          - not_null
+
+      - name: recorded_litres
+        description: >
+          Original fuel quantity recorded in the source system.
+          Preserves zero and negative values for data-quality analysis.
+
+      - name: implied_litres
+        description: >
+          Derived fuel quantity calculated by dividing recorded fuel cost
+          by recorded price per litre. Used as the primary analytical
+          fuel volume measure.
+
+      - name: price_per_litre
+        description: Recorded price charged per litre of fuel.
+        data_tests:
+          - not_null
+
+      - name: fuel_cost
+        description: >
+          Recorded fuel expenditure. Treated as the authoritative
+          financial amount for fuel cost analysis.
+        data_tests:
+          - not_null
+
+      - name: fuel_station
+        description: Standardized fuel station or vendor name.
+
+      - name: nonpositive_litres_flag
+        description: Indicates whether the original recorded litres were zero or negative.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: fuel_cost_mismatch_flag
+        description: >
+          Indicates whether recorded fuel cost differs from the
+          reconciliation amount based on absolute recorded litres
+          and price per litre by more than 1.00.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
